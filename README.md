@@ -33,4 +33,4 @@ An error value only indicates an issue in the writing process of the correspondi
 
 # Example
 An example would be visualizing the Mandelbrot set, where the iteration count is converted to color data and passed to the generate_png() function.
-This example can be found here -> 
+This example can be found in the example directory.
