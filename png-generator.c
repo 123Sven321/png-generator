@@ -65,10 +65,10 @@ uint8_t *compress_data(uint8_t *data, size_t size, uLong *compressed_size){
     int result = compress(output, compressed_size, (const Bytef *)data, size);
 
     if (result == Z_OK) {
-        printf("Compression successful.\n");
+        printf("png-generator: Compression successful.\n");
         return output;
     } else {
-        printf("Compression failed: %d\n", result);
+        printf("png-generator: Compression failed: %d\n", result);
         return NULL;
     }
 }
@@ -317,17 +317,17 @@ char *find_av_name(){
             return temp_name;                         //if non-existing -> return new name
         }
     }
-    printf("%s was overwritten.\n", file_name);
+    printf("png-generator: %s was overwritten.\n", file_name);
     remove(file_name);
     return file_name;                                 
 }
 
 int remove_file(){
     if(remove(file_name) == 0) {
-        printf("File removed.\n");
+        printf("png-generator: File removed.\n");
         return 0;
     }else{
-        perror("ERROR: Failed to remove file.\n");
+        perror("png-generator: ERROR: Failed to remove file.\n");
         return 1;
     }
 }
@@ -341,28 +341,28 @@ int generate_png(uint8_t *color_data, size_t color_data_size, int width, int hei
     FILE *file_check = fopen(file_name, "r");
     if(file_check){
         fclose(file_check);
-        printf("WARNING: File already exists.\n");
+        printf("png-generator: WARNING: File already exists.\n");
         file_name = find_av_name();
-        printf("New filename: %s\n", file_name);
+        printf("png-generator: New filename: %s\n", file_name);
     }
 
     if(signature()){
-        printf("ERROR: Failed to write signature.\n");
+        printf("png-generator: ERROR: Failed to write signature.\n");
         remove_file();
         return 1;
     }
     if(ihdr_chunk(width, height)){
-        printf("ERROR: Failed to write IHDR Chunk.\n");
+        printf("png-generator: ERROR: Failed to write IHDR Chunk.\n");
         remove_file();
         return 2;
     }
     if(idat_chunk(color_data, color_data_size, width, height)){
-        printf("ERROR: Failed to write IDAT Chunk.\n");
+        printf("png-generator: ERROR: Failed to write IDAT Chunk.\n");
         remove_file();
         return 3;
     }
     if(iend_chunk()){
-        printf("ERROR: Failed to write IEND Chunk.\n");
+        printf("png-generator: ERROR: Failed to write IEND Chunk.\n");
         remove_file();
         return 4;
     }
