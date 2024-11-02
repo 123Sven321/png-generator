@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "png-generator.h"
+#include "../png-generator.h"
 
 
 static const int iterations = 1000;
