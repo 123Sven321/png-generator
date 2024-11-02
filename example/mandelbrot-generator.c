@@ -118,7 +118,7 @@ int main(){
 
 
     //generate png using the png-generator.h header file
-    int result = generate_png(color_array, width*height*3, width, height, "closeup.png");
+    int result = generate_png(color_array, width*height*3, width, height, "mandelbrot-set.png");
 
     if(result == SUCCESS){
         printf("File written successfully\n");
