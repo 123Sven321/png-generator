@@ -2,4 +2,4 @@ This example generates an array of color data, which is then passed to the png-g
 
 Image dimensions, iteration count, and area of the set are customizable to discover beautiful fractals.
 
-The executable can be be generated via the makefile.
+The executable can be be generated via the makefile which uses gcc as compiler.
