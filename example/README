@@ -1,0 +1,5 @@
+This example generates an array of color data, which is then passed to the png-generator to create a PNG image.
+
+Image dimensions, iteration count, and area of the set are customizable to discover beautiful fractals.
+
+The executable can be be generated via the makefile.
