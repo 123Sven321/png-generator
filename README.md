@@ -1,22 +1,26 @@
-# What is png-generator?
+# png-generator
 png-generator is a minimalistic C header for creating PNG images from raw RGB data with 8-bit color depth.
 
-# How it's used.
-png-generator provides a single function:
+# How to Use
+png-generator provides two functions:
+
+## generate_png()
 ```
-generate_png(uint8_t *color_data, size_t color_data_size, int width, int height, char *name)
+int generate_png(uint8_t *color_data, size_t data_point_count, int width, int height, char *name);
 ```
-+ **color_data:** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*8-bit array of pixel color data in format {R-pixel1, G-pixel1, B-pixel1, R-pixel2, G-pixel2, B-pixel2, ...}*
-+ **color_data_size:** &nbsp;&nbsp;*size of the color data array in byte*
-+ **width:** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*width of the image in pixel*
-+ **height:** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*height of the image in pixel*
-+ **name:** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*name of the file including the suffix .png*
-<br>
-This will create a PNG image file in the same directory the png-generator.c file is located.
+Argument             | Description
+---------------------|-----------------
+**color_data**       | *8-bit array of pixel color data in RGB format `{R-pixel1, G-pixel1, B-pixel1, R-pixel2, G-pixel2, B-pixel2, ...}`. Can be generated using the `generate_color_array()` function*
+**data_point_count** | *Number of elements in the raw data array, not the color array*
+**width**            | *Width of the image in pixels*
+**height**           | *Height of the image in pixels*
+**name**             | *Name of the output PNG file, including the `.png` suffix*
+
+This function creates a PNG image file in the same directory where the `png-generator.c` file is located.
 
 ### return
-generate_png() returns an int as error code.
-The codes are defined as macros in the header file and can help to find the faulty code.
+`generate_png()` returns an integer error code.
+The error codes are defined as macros in the header file and indicate issues during the writing process of specific PNG chunks.
 ```
 #define SIGNATURE_ERROR 1
 #define IHDR_ERROR      2
@@ -24,13 +28,39 @@ The codes are defined as macros in the header file and can help to find the faul
 #define IEND_ERROR      4
 #define SUCCESS         0
 ```
-An error value only indicates an issue in the writing process of the corresponding png fragment, not errors in the data itself.
+> [!WARNING]
+> An error code only indicates an issue during the writing process of a PNG fragment, not errors in the PNG data.
 
+## generate_color_array()
+```
+uint8_t *generate_color_array(int *data, size_t data_point_count, int data_min, int data_max, uint32_t *heatmap, size_t color_amount);
+```
+Argument             | Description
+---------------------|-----------------
+**data**             | *Raw integer data to be visualized*
+**data_point_count** | *Number of elements in the raw data array*
+**data_min**         | *Smallest value in the raw data array*
+**data_max**         | *Largest value in the raw data array*
+**heatmap**          | *Array of colors in hexadecimal format (e.g., `0xffffff`)*
+**color_amount**     | *Number of colors in the the heatmap array*
+
+This function generates a color data array based on the given raw data and the specified colors in the heatmap array. The resulting color array can be used as input for the `generate_png()` function.
+
+### How it works
++ Colors are treated as points in a 3D space, with **R, G,** and **B** representing the **X, y,** and **z** coordinates.
++ Lines are drawn between adjacent colors in the heatmap, creating "sections".
++ For each value in the data, the function determines:
+  + Which section the value belongs to.
+  + The "progress" of the value wihtin that section.
++ Using this information, the function calculates the corresponding color (a point in 3D spcae) and writes its RGB values into the color array.
+
+### return
+`generate_color_array()` returns a pointer to the generated color array.
 
 # Dependencies
-+ **zlib:** *png-generator relies on the zlib library to compress the color data, so zlib has to be installed.*
-
++ **zlib:** *png-generator relies on the zlib library for compressing the color data.*
 
 # Example
-An example would be visualizing the Mandelbrot set, where the iteration count is converted to color data and passed to the generate_png() function.
-This example can be found in the example directory.
+A practical example of using png-generator would be visualizing the Mandelbrot set. In this case, the iteration count is converted into color data using `generate_color_array()` and then passed to the `generate_png()` function to create an image.
+<br>
+This example is available in the example directory.
