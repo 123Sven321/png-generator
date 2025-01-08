@@ -386,9 +386,10 @@ uint8_t *generate_color_array(int *data, size_t data_point_count, int data_min, 
     return color_array;
 }
 
-int generate_png(uint8_t *color_data, size_t data_size_byte, int width, int height, char *name){
+int generate_png(uint8_t *color_data, size_t data_point_count, int width, int height, char *name){
 
     file_name = name;                     //set file name
+    size_t data_size_byte = data_point_count * 3;
 
     //check for existing file and adjust name when needed
     FILE *file_check = fopen(file_name, "r");
