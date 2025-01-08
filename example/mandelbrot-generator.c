@@ -36,7 +36,7 @@ int main(){
     iteration_steps(-2, 1, width, steps_real);                          //customize range of real part
     iteration_steps(-1.5, 1.5, height, steps_imag);                     //customize range of imaginary part
 
-    uint16_t *mandelbrot_array = (uint16_t *)malloc(sizeof(uint16_t) * width *height);
+    int *mandelbrot_array = (int *)malloc(sizeof(int) * width *height);
 
     //generating the mandelbrotset
     unsigned int index = 0;
@@ -80,42 +80,12 @@ int main(){
     free(steps_imag);
 
 
-    //transform data to color data
-    uint8_t *color_array = (uint8_t *)malloc(sizeof(uint8_t) * width * height * 3);
+    int heatmap[14] = {0xAC0000, 0xffff00, 0x00ffe4, 0x00ffe4, 0x00ffe4, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000};
 
-    for(int i = 0; i < width * height; i++){
-        //heat map
-        if(mandelbrot_array[i] == iterations + 1){
-            color_array[i*3 + 0] = 0;
-            color_array[i*3 + 1] = 0;
-            color_array[i*3 + 2] = 0;
-        }else{
-            if(mandelbrot_array[i] < 20){
-                color_array[i*3 + 0] = 255;
-                color_array[i*3 + 1] = 255;
-                color_array[i*3 + 2] = 255;
-            }else if(mandelbrot_array[i] < 60 && mandelbrot_array[i] >= 20){
-                color_array[i*3 + 0] = 255;
-                color_array[i*3 + 1] = 116;
-                color_array[i*3 + 2] = 0;
-            }else if(mandelbrot_array[i] < 200 && mandelbrot_array[i] >= 60){
-                color_array[i*3 + 0] = 0;
-                color_array[i*3 + 1] = 255;
-                color_array[i*3 + 2] = 220;
-            }else{
-                color_array[i*3 + 0] = 184;
-                color_array[i*3 + 1] = 0;
-                color_array[i*3 + 2] = 0;
-            }
-        }
-        
-        double progress = (((double)i + 1) / ((double)width * (double)height)) * 100;
-        printf("\rGenerate color data: %.2f%%", progress);
-        fflush(stdout);
-    }
+    //transform data to color data
+    uint8_t *color_array = generate_color_array(mandelbrot_array, width*height, 1, 1001, heatmap, 14);
 
     printf("\nColor array written.\n\n");
-
 
     //generate png using the png-generator.h header file
     int result = generate_png(color_array, width*height*3, width, height, "mandelbrot-set.png");
