@@ -345,13 +345,13 @@ static int remove_file(){
 }
 
 //transforms raw data into a RGB color array based on the colors specified in the heatmap array
-uint8_t *generate_color_array(int *data, size_t data_size, int data_min, int data_max, uint32_t *heatmap, size_t color_amount){
+uint8_t *generate_color_array(int *data, size_t data_point_count, int data_min, int data_max, uint32_t *heatmap, size_t color_amount){
 
-    uint8_t *color_array = (uint8_t *) malloc(data_size*3);
+    uint8_t *color_array = (uint8_t *) malloc(data_point_count*3);
 
     int range = data_max - data_min;
 
-    for(int i = 0; i < data_size; i++){
+    for(int i = 0; i < data_point_count; i++){
 
         int area = ((data[i] - data_min) * (color_amount - 1)) / range;   //indicates between which colors the value lies (which vector the value is on)
         double value = ((((double)data[i] - (double)data_min) * ((double)color_amount - 1.0)) / (double)range) - (double)area;  //portrays the "progress" between the two colors
@@ -386,7 +386,7 @@ uint8_t *generate_color_array(int *data, size_t data_size, int data_min, int dat
     return color_array;
 }
 
-int generate_png(uint8_t *color_data, size_t color_data_size, int width, int height, char *name){
+int generate_png(uint8_t *color_data, size_t data_size_byte, int width, int height, char *name){
 
     file_name = name;                     //set file name
 
@@ -409,7 +409,7 @@ int generate_png(uint8_t *color_data, size_t color_data_size, int width, int hei
         remove_file();
         return 2;
     }
-    if(idat_chunk(color_data, color_data_size, width, height)){
+    if(idat_chunk(color_data, data_size_byte, width, height)){
         printf("png-generator: ERROR: Failed to write IDAT Chunk.\n");
         remove_file();
         return 3;
