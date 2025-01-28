@@ -12,7 +12,7 @@
 #define IEND_ERROR      4
 #define SUCCESS         0
 
-
-int generate_png(uint8_t *color_data, size_t color_data_size, int width, int height, char *name);
+uint8_t *generate_color_array(int *data, size_t data_point_count, int data_min, int data_max, uint32_t *heatmap, size_t color_amount);
+int generate_png(uint8_t *color_data, size_t data_point_count, int width, int height, char *name);
 
 #endif

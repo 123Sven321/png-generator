@@ -5,17 +5,25 @@
 #include "png-generator.h"
 
 
+typedef struct Vector{
+
+    int x;
+    int y;
+    int z;
+
+}Vec;
+
 
 //PNG image values
-static const int PNG_BIT_DEPTH = 8;      
-static const int PNG_COLOR_TYPE = 2;     //RGB
-static const int PNG_COMPRESSION = 0;    //zlib
-static const int PNG_FILTER = 0;         //no filter
-static const int PNG_INTERLACE = 0;      //no interlace
+static const uint8_t PNG_BIT_DEPTH = 8;      
+static const uint8_t PNG_COLOR_TYPE = 2;     //RGB
+static const uint8_t PNG_COMPRESSION = 0;    //zlib
+static const uint8_t PNG_FILTER = 0;         //no filter
+static const uint8_t PNG_INTERLACE = 0;      //no interlace
 static char *file_name = NULL;
 
 //converts a 32 bit variable to an 8bit array
-uint8_t *convert_32bit_to_8bit(uint32_t val){
+static uint8_t *convert_32bit_to_8bit(uint32_t val){
     static uint8_t bit8_array[4];
     bit8_array[0] = (val >> 24) & 0xFF;
     bit8_array[1] = (val >> 16) & 0xFF;
@@ -26,7 +34,7 @@ uint8_t *convert_32bit_to_8bit(uint32_t val){
 }
 
 //appends an array to another
-uint8_t *append_8bit_array(uint8_t *arr1, size_t size1, uint8_t *arr2, size_t size2){
+static uint8_t *append_8bit_array(uint8_t *arr1, size_t size1, uint8_t *arr2, size_t size2){
     uint8_t *new_array = (uint8_t *)malloc(size1 + size2);
 
     for(int i = 0; i < size1 + size2; i++){
@@ -39,11 +47,12 @@ uint8_t *append_8bit_array(uint8_t *arr1, size_t size1, uint8_t *arr2, size_t si
     return new_array;
 }
 
-uint8_t *add_filter(uint8_t *data, size_t width, size_t height) {
+//function adds the filter type at the beginning of each horizontal line of pixels in the PNG
+static uint8_t *add_filter(uint8_t *data, size_t width, size_t height) {
     size_t filtered_size = height * (width * 3 + 1);
     uint8_t *filtered_data = (uint8_t *)malloc(filtered_size);
 
-    //fill new array with data + filtertype at beginning of every row
+    //fill new array with data + filter type at beginning of every row
     for(size_t y = 0; y < height; y++){
 
         filtered_data[y*(width*3+1)] = 0;
@@ -56,7 +65,8 @@ uint8_t *add_filter(uint8_t *data, size_t width, size_t height) {
     return filtered_data;
 }
 
-uint8_t *compress_data(uint8_t *data, size_t size, uLong *compressed_size){
+//compresses the filtered color data using zlib
+static uint8_t *compress_data(uint8_t *data, size_t size, uLong *compressed_size){
 
     *compressed_size = compressBound(size);
 
@@ -74,7 +84,7 @@ uint8_t *compress_data(uint8_t *data, size_t size, uLong *compressed_size){
 }
 
 //generates the crc-value
-uint32_t calculate_crc(uint8_t *data, size_t size){
+static uint32_t calculate_crc(uint8_t *data, size_t size){
     
     //initialization
     uint32_t gen = 0xEDB88320;          //inverted generator polynomial
@@ -98,7 +108,7 @@ uint32_t calculate_crc(uint8_t *data, size_t size){
 }
 
 
-int write_data_to_file(uint8_t *data, size_t size){
+static int write_data_to_file(uint8_t *data, size_t size){
 
     FILE *file = fopen(file_name, "ab");
 
@@ -125,10 +135,9 @@ int write_data_to_file(uint8_t *data, size_t size){
 
 
 
-
-
 //PNG fragments
-int signature(){
+//identifier for PNG files
+static int signature(){
 
     int error_check = 0;
 
@@ -142,7 +151,8 @@ int signature(){
     }
 }
 
-int ihdr_chunk(int width, int height){
+//contains essential information about the image e.g. width, height, color type...
+static int ihdr_chunk(int width, int height){
 
     int error_check = 0;                                                                 //error value. If != 0 means error
 
@@ -182,7 +192,8 @@ int ihdr_chunk(int width, int height){
     }
 }
 
-int idat_chunk(uint8_t *raw_data, size_t size, int width, int height){
+//contains the filtered and compressed data
+static int idat_chunk(uint8_t *raw_data, size_t size, int width, int height){
 
     int error_check = 0;
 
@@ -264,12 +275,13 @@ int idat_chunk(uint8_t *raw_data, size_t size, int width, int height){
     return 0;
 }
 
-int iend_chunk(){
+//defines the end of the image
+static int iend_chunk(){
 
     int error_check = 0;
 
     uint32_t data_length = 0;
-    uint8_t chunk_type[] = {0x49, 0x45, 0x4E, 0x44};                                     //IHDR
+    uint8_t chunk_type[] = {0x49, 0x45, 0x4E, 0x44};                                     //IEND
     uint32_t crc = 0xAE426082;
 
     error_check = error_check + write_data_to_file(convert_32bit_to_8bit(data_length), 4);
@@ -284,7 +296,7 @@ int iend_chunk(){
 
 }
 
-char *find_av_name(){
+static char *find_av_name(){
 
     uint8_t number = 1;                               //number extension for name
 
@@ -322,7 +334,7 @@ char *find_av_name(){
     return file_name;                                 
 }
 
-int remove_file(){
+static int remove_file(){
     if(remove(file_name) == 0) {
         printf("png-generator: File removed.\n");
         return 0;
@@ -332,10 +344,52 @@ int remove_file(){
     }
 }
 
+//transforms raw data into a RGB color array based on the colors specified in the heatmap array
+uint8_t *generate_color_array(int *data, size_t data_point_count, int data_min, int data_max, uint32_t *heatmap, size_t color_amount){
 
-int generate_png(uint8_t *color_data, size_t color_data_size, int width, int height, char *name){
+    uint8_t *color_array = (uint8_t *) malloc(data_point_count*3);
+
+    int range = data_max - data_min;
+
+    for(int i = 0; i < data_point_count; i++){
+
+        int area = ((data[i] - data_min) * (color_amount - 1)) / range;   //indicates between which colors the value lies (which vector the value is on)
+        double value = ((((double)data[i] - (double)data_min) * ((double)color_amount - 1.0)) / (double)range) - (double)area;  //portrays the "progress" between the two colors
+
+        //calculates the exact color based on the value
+        Vec posVek;
+        posVek.x = (heatmap[area] >> 16) & 0xFF;
+        posVek.y = (heatmap[area] >> 8) & 0xFF;
+        posVek.z = heatmap[area] & 0xFF;
+
+        Vec endPoint;
+        endPoint.x = (heatmap[area+1] >> 16) & 0xFF;
+        endPoint.y = (heatmap[area+1] >> 8) & 0xFF;
+        endPoint.z = heatmap[area+1] & 0xFF;
+
+        Vec dirVek;
+        dirVek.x = endPoint.x - posVek.x;
+        dirVek.y = endPoint.y - posVek.y;
+        dirVek.z = endPoint.z - posVek.z;
+
+        Vec resultColor;
+        resultColor.x = posVek.x + value * dirVek.x;
+        resultColor.y = posVek.y + value * dirVek.y;
+        resultColor.z = posVek.z + value * dirVek.z;
+
+        color_array[i*3] = resultColor.x;
+        color_array[i*3 + 1] = resultColor.y;
+        color_array[i*3 + 2] = resultColor.z;
+
+    }
+
+    return color_array;
+}
+
+int generate_png(uint8_t *color_data, size_t data_point_count, int width, int height, char *name){
 
     file_name = name;                     //set file name
+    size_t data_size_byte = data_point_count * 3;
 
     //check for existing file and adjust name when needed
     FILE *file_check = fopen(file_name, "r");
@@ -356,7 +410,7 @@ int generate_png(uint8_t *color_data, size_t color_data_size, int width, int hei
         remove_file();
         return 2;
     }
-    if(idat_chunk(color_data, color_data_size, width, height)){
+    if(idat_chunk(color_data, data_size_byte, width, height)){
         printf("png-generator: ERROR: Failed to write IDAT Chunk.\n");
         remove_file();
         return 3;
